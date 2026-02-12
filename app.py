@@ -115,7 +115,7 @@ def handle_query(req: QueryRequest):
         return {
             "answer": str(entry.answer),
             "cached": True,
-            "latency": 5,
+            "latency": 1,
             "cacheKey": str(key)
         }
 
@@ -131,7 +131,7 @@ def handle_query(req: QueryRequest):
             return {
                 "answer": str(entry.answer),
                 "cached": True,
-                "latency": 5,
+                "latency": 1,
                 "cacheKey": str(k)
             }
 
@@ -146,7 +146,7 @@ def handle_query(req: QueryRequest):
     return {
         "answer": str(answer),
         "cached": False,
-        "latency": 200,
+        "latency": 300,
         "cacheKey": str(key)
     }
 
