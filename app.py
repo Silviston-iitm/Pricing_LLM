@@ -4,6 +4,7 @@ import math
 from collections import OrderedDict
 from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 # ================= CONFIG =================
 CACHE_SIZE = 1500
@@ -13,6 +14,15 @@ MODEL_COST_PER_1M = 0.50
 SIMILARITY_THRESHOLD = 0.95
 
 app = FastAPI()
+
+# ================= CORS MIDDLEWARE =================
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ================= DATA STRUCTURES =================
 class CacheEntry:
@@ -40,13 +50,13 @@ def hash_query(text: str):
     return hashlib.md5(text.encode()).hexdigest()
 
 def get_embedding(text: str):
-    # Simple fake embedding (replace with real embedding API)
+    # Simple fake embedding (replace with real embedding API in production)
     return [float(ord(c)) for c in text[:50]]
 
 def cosine_similarity(a, b):
-    dot = sum(x*y for x, y in zip(a, b))
-    norm_a = math.sqrt(sum(x*x for x in a))
-    norm_b = math.sqrt(sum(x*x for x in b))
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = math.sqrt(sum(x * x for x in a))
+    norm_b = math.sqrt(sum(x * x for x in b))
     if norm_a == 0 or norm_b == 0:
         return 0
     return dot / (norm_a * norm_b)
@@ -65,7 +75,7 @@ def enforce_lru():
         cache.popitem(last=False)
 
 def fake_llm_call(query):
-    # Replace with real model call
+    # Replace with real LLM call
     time.sleep(0.2)
     return f"Answer to: {query}"
 
@@ -73,6 +83,11 @@ def fake_llm_call(query):
 class QueryRequest(BaseModel):
     query: str
     application: str
+
+# ================= HEALTH CHECK =================
+@app.get("/")
+def health_check():
+    return {"status": "ok"}
 
 # ================= MAIN ENDPOINT =================
 @app.post("/")
@@ -85,7 +100,7 @@ def handle_query(req: QueryRequest):
 
     remove_expired()
 
-    # 1. Exact match
+    # 1. Exact match cache
     if key in cache:
         entry = cache[key]
         entry.last_access = time.time()
@@ -99,7 +114,7 @@ def handle_query(req: QueryRequest):
             "cacheKey": key
         }
 
-    # 2. Semantic match
+    # 2. Semantic cache
     query_embedding = get_embedding(normalized)
     for k, entry in cache.items():
         sim = cosine_similarity(query_embedding, entry.embedding)
@@ -115,7 +130,7 @@ def handle_query(req: QueryRequest):
                 "cacheKey": k
             }
 
-    # 3. Cache miss → LLM call
+    # 3. Cache miss → call LLM
     analytics["cacheMisses"] += 1
     answer = fake_llm_call(normalized)
 
