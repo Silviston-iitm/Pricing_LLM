@@ -169,10 +169,10 @@ def get_analytics():
 
     return {
         "hitRate": round(hit_rate, 2),
-        "totalRequests": total,
-        "cacheHits": hits,
-        "cacheMisses": misses,
-        "cacheSize": len(cache),
+        "totalRequests": int(total),
+        "cacheHits": int(hits),
+        "cacheMisses": int(misses),
+        "cacheSize": int(len(cache)),
         "costSavings": round(savings, 2),
         "savingsPercent": int(savings_percent),
         "strategies": [
@@ -182,3 +182,4 @@ def get_analytics():
             "TTL expiration"
         ]
     }
+
