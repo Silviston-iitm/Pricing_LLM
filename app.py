@@ -106,7 +106,8 @@ def handle_query(req: QueryRequest):
         entry.last_access = time.time()
         cache.move_to_end(key)
         analytics["cacheHits"] += 1
-        latency = int((time.time() - start) * 1000)
+        latency = max(1, int((time.time() - start) * 1000))
+
         return {
             "answer": entry.answer,
             "cached": True,
@@ -122,7 +123,8 @@ def handle_query(req: QueryRequest):
             entry.last_access = time.time()
             cache.move_to_end(k)
             analytics["cacheHits"] += 1
-            latency = int((time.time() - start) * 1000)
+            latency = max(1, int((time.time() - start) * 1000))
+
             return {
                 "answer": entry.answer,
                 "cached": True,
@@ -139,7 +141,8 @@ def handle_query(req: QueryRequest):
     cache.move_to_end(key)
     enforce_lru()
 
-    latency = int((time.time() - start) * 1000)
+    latency = max(1, int((time.time() - start) * 1000))
+
     return {
         "answer": answer,
         "cached": False,
