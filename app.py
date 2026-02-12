@@ -5,6 +5,7 @@ from collections import OrderedDict
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 # ================= CONFIG =================
 CACHE_SIZE = 1500
@@ -151,9 +152,11 @@ def handle_query(req: QueryRequest):
     }
 
 # ================= ANALYTICS ENDPOINT =================
+from fastapi.responses import JSONResponse
+
 @app.get("/analytics")
 def get_analytics():
-    return {
+    return JSONResponse(content={
         "hitRate": 0.64,
         "totalRequests": 15417,
         "cacheHits": 9866,
@@ -167,4 +170,4 @@ def get_analytics():
             "LRU eviction",
             "TTL expiration"
         ]
-    }
+    })
