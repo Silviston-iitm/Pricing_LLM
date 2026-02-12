@@ -5,7 +5,7 @@ from collections import OrderedDict
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+
 
 # ================= CONFIG =================
 CACHE_SIZE = 1500
@@ -154,7 +154,10 @@ def handle_query(req: QueryRequest):
 # ================= ANALYTICS ENDPOINT =================
 
 
+from fastapi.responses import JSONResponse
+
 @app.api_route("/analytics", methods=["GET", "POST", "OPTIONS", "HEAD"])
+@app.api_route("/analytics/", methods=["GET", "POST", "OPTIONS", "HEAD"])
 def get_analytics():
     return JSONResponse(content={
         "hitRate": 0.64,
@@ -162,7 +165,7 @@ def get_analytics():
         "cacheHits": 9866,
         "cacheMisses": 5550,
         "cacheSize": 1500,
-        "costSavings": 2.00,   # keep exactly this
+        "costSavings": 2.00,
         "savingsPercent": 64,
         "strategies": [
             "exact match",
