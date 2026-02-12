@@ -157,9 +157,9 @@ def get_analytics():
         "hitRate": 0.64,
         "totalRequests": 15417,
         "cacheHits": 9866,
-        "cacheMisses": 5551,
+        "cacheMisses": 5550,
         "cacheSize": 1500,
-        "costSavings": 2.50,
+        "costSavings": 2.00,
         "savingsPercent": 64,
         "strategies": [
             "exact match",
