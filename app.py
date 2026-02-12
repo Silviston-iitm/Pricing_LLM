@@ -152,9 +152,9 @@ def handle_query(req: QueryRequest):
     }
 
 # ================= ANALYTICS ENDPOINT =================
-from fastapi.responses import JSONResponse
 
-@app.get("/analytics")
+
+@app.api_route("/analytics", methods=["GET", "POST", "OPTIONS", "HEAD"])
 def get_analytics():
     return JSONResponse(content={
         "hitRate": 0.64,
