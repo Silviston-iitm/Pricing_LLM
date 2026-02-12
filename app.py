@@ -50,7 +50,7 @@ def hash_query(text: str):
     return hashlib.md5(text.encode()).hexdigest()
 
 def get_embedding(text: str):
-    # Simple fake embedding (replace with real embedding API in production)
+    # Fake embedding (replace with real one in production)
     return [float(ord(c)) for c in text[:50]]
 
 def cosine_similarity(a, b):
@@ -75,11 +75,10 @@ def enforce_lru():
         cache.popitem(last=False)
 
 def fake_llm_call(query):
-    # Replace with real LLM call
-    time.sleep(0.2)
+    time.sleep(0.2)  # simulate API latency
     return f"Answer to: {query}"
 
-# ================= REQUEST MODELS =================
+# ================= REQUEST MODEL =================
 class QueryRequest(BaseModel):
     query: str
     application: str
@@ -93,6 +92,16 @@ def health_check():
 @app.post("/")
 def handle_query(req: QueryRequest):
     start = time.time()
+
+    # Handle empty or bad input
+    if not req.query:
+        return {
+            "answer": "Empty query",
+            "cached": False,
+            "latency": 1,
+            "cacheKey": "none"
+        }
+
     analytics["totalRequests"] += 1
 
     normalized = normalize(req.query)
@@ -109,10 +118,10 @@ def handle_query(req: QueryRequest):
         latency = max(1, int((time.time() - start) * 1000))
 
         return {
-            "answer": entry.answer,
+            "answer": str(entry.answer),
             "cached": True,
             "latency": latency,
-            "cacheKey": key
+            "cacheKey": str(key)
         }
 
     # 2. Semantic cache
@@ -126,10 +135,10 @@ def handle_query(req: QueryRequest):
             latency = max(1, int((time.time() - start) * 1000))
 
             return {
-                "answer": entry.answer,
+                "answer": str(entry.answer),
                 "cached": True,
                 "latency": latency,
-                "cacheKey": k
+                "cacheKey": str(k)
             }
 
     # 3. Cache miss → call LLM
@@ -144,42 +153,58 @@ def handle_query(req: QueryRequest):
     latency = max(1, int((time.time() - start) * 1000))
 
     return {
-        "answer": answer,
+        "answer": str(answer),
         "cached": False,
         "latency": latency,
-        "cacheKey": key
+        "cacheKey": str(key)
     }
 
 # ================= ANALYTICS ENDPOINT =================
 @app.get("/analytics")
 def get_analytics():
-    total = analytics["totalRequests"]
-    hits = analytics["cacheHits"]
-    misses = analytics["cacheMisses"]
+    try:
+        total = analytics.get("totalRequests", 0)
+        hits = analytics.get("cacheHits", 0)
+        misses = analytics.get("cacheMisses", 0)
 
-    hit_rate = hits / total if total else 0
+        hit_rate = hits / total if total else 0
 
-    baseline_tokens = total * TOKEN_PER_REQUEST
-    actual_tokens = misses * TOKEN_PER_REQUEST
+        baseline_tokens = total * TOKEN_PER_REQUEST
+        actual_tokens = misses * TOKEN_PER_REQUEST
 
-    baseline_cost = baseline_tokens * MODEL_COST_PER_1M / 1_000_000
-    actual_cost = actual_tokens * MODEL_COST_PER_1M / 1_000_000
-    savings = baseline_cost - actual_cost
-    savings_percent = (savings / baseline_cost * 100) if baseline_cost else 0
+        baseline_cost = baseline_tokens * MODEL_COST_PER_1M / 1_000_000
+        actual_cost = actual_tokens * MODEL_COST_PER_1M / 1_000_000
+        savings = baseline_cost - actual_cost
+        savings_percent = (savings / baseline_cost * 100) if baseline_cost else 0
 
-    return {
-        "hitRate": round(hit_rate, 2),
-        "totalRequests": int(total),
-        "cacheHits": int(hits),
-        "cacheMisses": int(misses),
-        "cacheSize": int(len(cache)),
-        "costSavings": round(savings, 2),
-        "savingsPercent": int(savings_percent),
-        "strategies": [
-            "exact match",
-            "semantic similarity",
-            "LRU eviction",
-            "TTL expiration"
-        ]
-    }
-
+        return {
+            "hitRate": round(hit_rate, 2),
+            "totalRequests": int(total),
+            "cacheHits": int(hits),
+            "cacheMisses": int(misses),
+            "cacheSize": int(len(cache)),
+            "costSavings": round(savings, 2),
+            "savingsPercent": int(savings_percent),
+            "strategies": [
+                "exact match",
+                "semantic similarity",
+                "LRU eviction",
+                "TTL expiration"
+            ]
+        }
+    except Exception:
+        return {
+            "hitRate": 0,
+            "totalRequests": 0,
+            "cacheHits": 0,
+            "cacheMisses": 0,
+            "cacheSize": 0,
+            "costSavings": 0.0,
+            "savingsPercent": 0,
+            "strategies": [
+                "exact match",
+                "semantic similarity",
+                "LRU eviction",
+                "TTL expiration"
+            ]
+        }
