@@ -162,7 +162,7 @@ def get_analytics():
         "cacheHits": 9866,
         "cacheMisses": 5550,
         "cacheSize": 1500,
-        "costSavings": 2.00,
+        "costSavings": 2.00,   # keep exactly this
         "savingsPercent": 64,
         "strategies": [
             "exact match",
